@@ -48,10 +48,10 @@ void sr_init(struct sr_instance* sr)
     pthread_create(&thread, &(sr->attr), sr_arpcache_timeout, sr);
     
     /* Add initialization code here! */
-    sr_addr_tries* root = (sr_addr_tries *)calloc(1, sizeof(sr_addr_tries));
-    root->is_root = 1;
-    root->has_visited = 1;
-    root->routing_table_entry = NULL;
+    sr->tries_root = (sr_addr_tries *)calloc(1, sizeof(sr_addr_tries));
+    sr->tries_root->is_root = 1;
+    sr->tries_root->has_visited = 1;
+    sr->tries_root->routing_table_entry = NULL;
 
     struct sr_rt *curr_routing_table_entry = sr->routing_table;
     uint32_t longest_prefix = 0;    
@@ -59,7 +59,7 @@ void sr_init(struct sr_instance* sr)
         uint32_t gw = ntohl(curr_routing_table_entry->gw.s_addr);
         uint32_t mask = ntohl(curr_routing_table_entry->mask.s_addr);
         gw &= mask;
-        create_addr_tries(root, gw, mask, curr_routing_table_entry);
+        create_addr_tries(sr->tries_root, gw, mask, curr_routing_table_entry);
         curr_routing_table_entry = curr_routing_table_entry->next;
     }    
 
@@ -71,6 +71,7 @@ void create_addr_tries(sr_addr_tries* root,
                        struct sr_rt *routing_table_entry) {
 
     sr_addr_tries* curr_node = root;
+    int i;
     for (i = 31; i >= 0; --i) {
         uint8_t mask_binary_value = mask >> i & 1;
         if(0 == mask_binary_value) {
@@ -78,23 +79,40 @@ void create_addr_tries(sr_addr_tries* root,
             break;
         }
         uint8_t gw_binary_value = gw >> i & 1;
-        sr_addr_tries* node0 = (sr_addr_tries *)calloc(1, sizeof(sr_addr_tries));
-        sr_addr_tries* node1 = (sr_addr_tries *)calloc(1, sizeof(sr_addr_tries));
-        node0->is_root = 0;
-        node0->has_visited = 0;
-        node0->routing_table_entry = NULL;
-        node1->is_root = 0;
-        node1->has_visited = 0;
-        node1->routing_table_entry = NULL;
+        sr_addr_tries* node0 = NULL;
+        sr_addr_tries* node1 = NULL;
+        if(!curr_node->nodes[0]) {
+            node0 = (sr_addr_tries *)calloc(1, sizeof(sr_addr_tries));
+            node0->is_root = 0;
+            node0->has_visited = 0;
+            node0->routing_table_entry = NULL;
+        }else {
+            node0 = curr_node->nodes[0];
+        }
+
+        if(!curr_node->nodes[1]) {
+            node1 = (sr_addr_tries *)calloc(1, sizeof(sr_addr_tries));
+            node1->is_root = 0;
+            node1->has_visited = 0;
+            node1->routing_table_entry = NULL;
+        }else {
+            node1 = curr_node->nodes[1];
+        }
+        
         if(0 == gw_binary_value) {
             node0->has_visited = 1;
             curr_node->nodes[0] = node0;
+            curr_node->nodes[1] = node1;
             curr_node = node0;
         }
         else if(1 == gw_binary_value) {
             node1->has_visited = 1;
+            curr_node->nodes[0] = node0;
             curr_node->nodes[1] = node1;
             curr_node = node1;
+        }
+        if(0 == i) {
+            curr_node->routing_table_entry = routing_table_entry;    
         }
     }
 }

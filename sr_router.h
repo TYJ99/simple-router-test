@@ -54,7 +54,7 @@ struct sr_instance
     struct sr_arpcache cache;   /* ARP cache */
     pthread_attr_t attr;
     FILE* logfile;
-    sr_addr_tries* root;
+    sr_addr_tries* tries_root;
 };
 
 struct sr_addr_tries {

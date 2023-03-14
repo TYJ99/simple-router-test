@@ -482,29 +482,37 @@ struct sr_rt * find_entry_in_routing_table(struct sr_instance* sr,
 
 struct sr_rt * find_longest_prefix_match_in_routing_table(struct sr_instance* sr, 
                                                           uint32_t packet_ip_addr) {
+    packet_ip_addr = ntohl(packet_ip_addr);
     struct sr_rt *next_hop = NULL;
     /*uint32_t packet_ip_addr = packet_ip_header->ip_dst;*/
     struct sr_rt *curr_routing_table_entry = sr->routing_table;
-    uint32_t longest_prefix = 0;
     fprintf(stderr, "in find_longest_prefix_match_in_routing_table\n");
     fprintf(stderr, "packet_ip_addr: ");   
     print_addr_ip_int(packet_ip_addr); 
-    while(NULL != curr_routing_table_entry) {
-        fprintf(stderr, "curr_routing_table_entry->gw: ");   
-        print_addr_ip_int(curr_routing_table_entry->gw.s_addr); 
-        uint32_t packet_ip_addr_with_mask = packet_ip_addr & curr_routing_table_entry->mask.s_addr;
-        uint32_t curr_routing_table_entry_gw_with_mask = curr_routing_table_entry->gw.s_addr & curr_routing_table_entry->mask.s_addr;
-
-        if(packet_ip_addr_with_mask == curr_routing_table_entry_gw_with_mask && 
-           longest_prefix <= curr_routing_table_entry->mask.s_addr) {
-
-              fprintf(stderr, "longest prefix matched!\n");
-              longest_prefix = curr_routing_table_entry->mask.s_addr;
-              next_hop = curr_routing_table_entry;
-              break;
+    sr_addr_tries* curr_node = sr->tries_root;    
+    for (i = 31; i >= 0; --i) {
+        uint8_t packet_binary_value = packet_ip_addr >> i & 1;
+        
+        if(curr_node->routing_table_entry != NULL) {
+            next_hop = curr_node->routing_table_entry;
         }
-        curr_routing_table_entry = curr_routing_table_entry->next;
-    }    
+
+        if(0 == packet_binary_value) {
+            if(curr_node->nodes[0] && 1 == curr_node->nodes[0]->has_visited) {
+                curr_node = curr_node->nodes[0];
+            }else {
+                break;
+            }
+        }
+        else if(1 == packet_binary_value) {
+            if(curr_node->nodes[1] && 1 == curr_node->nodes[1]->has_visited) {
+                curr_node = curr_node->nodes[1];
+            }else {
+                break;
+            }
+        }
+    }
+
     return next_hop;
 }
 
