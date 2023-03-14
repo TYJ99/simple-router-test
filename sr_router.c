@@ -48,13 +48,12 @@ void sr_init(struct sr_instance* sr)
     pthread_create(&thread, &(sr->attr), sr_arpcache_timeout, sr);
     
     /* Add initialization code here! */
-    sr->tries_root = (sr_addr_tries *)calloc(1, sizeof(sr_addr_tries));
+    sr->tries_root = (struct sr_addr_tries *)calloc(1, sizeof(struct sr_addr_tries));
     sr->tries_root->is_root = 1;
     sr->tries_root->has_visited = 1;
     sr->tries_root->routing_table_entry = NULL;
 
-    struct sr_rt *curr_routing_table_entry = sr->routing_table;
-    uint32_t longest_prefix = 0;    
+    struct sr_rt *curr_routing_table_entry = sr->routing_table;  
     while(NULL != curr_routing_table_entry) {        
         uint32_t gw = ntohl(curr_routing_table_entry->gw.s_addr);
         uint32_t mask = ntohl(curr_routing_table_entry->mask.s_addr);
@@ -65,13 +64,15 @@ void sr_init(struct sr_instance* sr)
 
 } /* -- sr_init -- */
 
-void create_addr_tries(sr_addr_tries* root, 
+void create_addr_tries(struct sr_addr_tries* root, 
                        uint32_t gw, 
                        uint32_t mask,
                        struct sr_rt *routing_table_entry) {
 
-    sr_addr_tries* curr_node = root;
+    struct sr_addr_tries* curr_node = root;
     int i;
+    fprintf(stderr, "\nIn create_addr_tries: \n");
+    fprintf(stderr, "gateway: \n");
     for (i = 31; i >= 0; --i) {
         uint8_t mask_binary_value = mask >> i & 1;
         if(0 == mask_binary_value) {
@@ -79,10 +80,11 @@ void create_addr_tries(sr_addr_tries* root,
             break;
         }
         uint8_t gw_binary_value = gw >> i & 1;
-        sr_addr_tries* node0 = NULL;
-        sr_addr_tries* node1 = NULL;
+        fprintf(stderr, "%d", gw_binary_value);
+        struct sr_addr_tries* node0 = NULL;
+        struct sr_addr_tries* node1 = NULL;
         if(!curr_node->nodes[0]) {
-            node0 = (sr_addr_tries *)calloc(1, sizeof(sr_addr_tries));
+            node0 = (struct sr_addr_tries *)calloc(1, sizeof(struct sr_addr_tries));
             node0->is_root = 0;
             node0->has_visited = 0;
             node0->routing_table_entry = NULL;
@@ -91,7 +93,7 @@ void create_addr_tries(sr_addr_tries* root,
         }
 
         if(!curr_node->nodes[1]) {
-            node1 = (sr_addr_tries *)calloc(1, sizeof(sr_addr_tries));
+            node1 = (struct sr_addr_tries *)calloc(1, sizeof(struct sr_addr_tries));
             node1->is_root = 0;
             node1->has_visited = 0;
             node1->routing_table_entry = NULL;
@@ -112,7 +114,9 @@ void create_addr_tries(sr_addr_tries* root,
             curr_node = node1;
         }
         if(0 == i) {
-            curr_node->routing_table_entry = routing_table_entry;    
+            fprintf(stderr, "\nrouting_table_entry: ");   
+            curr_node->routing_table_entry = routing_table_entry;
+            print_addr_ip_int(curr_node->routing_table_entry->gw.s_addr);    
         }
     }
 }

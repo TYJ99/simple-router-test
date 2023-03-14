@@ -485,14 +485,16 @@ struct sr_rt * find_longest_prefix_match_in_routing_table(struct sr_instance* sr
     packet_ip_addr = ntohl(packet_ip_addr);
     struct sr_rt *next_hop = NULL;
     /*uint32_t packet_ip_addr = packet_ip_header->ip_dst;*/
-    struct sr_rt *curr_routing_table_entry = sr->routing_table;
+    /*struct sr_rt *curr_routing_table_entry = sr->routing_table;*/
     fprintf(stderr, "in find_longest_prefix_match_in_routing_table\n");
     fprintf(stderr, "packet_ip_addr: ");   
-    print_addr_ip_int(packet_ip_addr); 
-    sr_addr_tries* curr_node = sr->tries_root;    
+    print_addr_ip_int(packet_ip_addr);
+    fprintf(stderr, "packet_binary_value: "); 
+    struct sr_addr_tries* curr_node = sr->tries_root;  
+    int i;  
     for (i = 31; i >= 0; --i) {
         uint8_t packet_binary_value = packet_ip_addr >> i & 1;
-        
+        fprintf(stderr, "%d", packet_binary_value);
         if(curr_node->routing_table_entry != NULL) {
             next_hop = curr_node->routing_table_entry;
         }
@@ -511,8 +513,16 @@ struct sr_rt * find_longest_prefix_match_in_routing_table(struct sr_instance* sr
                 break;
             }
         }
+        if(0 == i) {
+            if(curr_node->routing_table_entry != NULL) {
+              next_hop = curr_node->routing_table_entry;
+            }            
+        }
     }
-
+    if(next_hop) {
+        fprintf(stderr, "\nnext_hop: ");   
+        print_addr_ip_int(next_hop->gw.s_addr);
+    }
     return next_hop;
 }
 

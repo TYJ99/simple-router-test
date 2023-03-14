@@ -41,6 +41,13 @@ struct sr_rt;
  *
  * -------------------------------------------------------------------------- */
 
+struct sr_addr_tries {
+    uint8_t is_root;
+    uint8_t has_visited;
+    struct sr_rt *routing_table_entry;
+    struct sr_addr_tries* nodes[2]; 
+};
+
 struct sr_instance
 {
     int  sockfd;   /* socket to server */
@@ -54,17 +61,10 @@ struct sr_instance
     struct sr_arpcache cache;   /* ARP cache */
     pthread_attr_t attr;
     FILE* logfile;
-    sr_addr_tries* tries_root;
+    struct sr_addr_tries* tries_root;
 };
 
-struct sr_addr_tries {
-    uint8_t is_root;
-    uint8_t has_visited;
-    struct sr_rt *routing_table_entry;
-    sr_addr_tries* nodes[2]; 
-}
-
-void create_addr_tries(sr_addr_tries* root, 
+void create_addr_tries(struct sr_addr_tries* root, 
                        uint32_t gw, 
                        uint32_t mask,
                        struct sr_rt *routing_table_entry);
