@@ -54,7 +54,20 @@ struct sr_instance
     struct sr_arpcache cache;   /* ARP cache */
     pthread_attr_t attr;
     FILE* logfile;
+    sr_addr_tries* root;
 };
+
+struct sr_addr_tries {
+    uint8_t is_root;
+    uint8_t has_visited;
+    struct sr_rt *routing_table_entry;
+    sr_addr_tries* nodes[2]; 
+}
+
+void create_addr_tries(sr_addr_tries* root, 
+                       uint32_t gw, 
+                       uint32_t mask,
+                       struct sr_rt *routing_table_entry);
 
 /* -- sr_main.c -- */
 int sr_verify_routing_table(struct sr_instance* sr);
