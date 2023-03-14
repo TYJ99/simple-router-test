@@ -224,11 +224,21 @@ static void sr_destroy_instance(struct sr_instance* sr)
     {
         sr_dump_close(sr->logfile);
     }
-
+    free_addr_tries(sr->tries_root);
     /*
     fprintf(stderr,"sr_destroy_instance leaking memory\n");
     */
 } /* -- sr_destroy_instance -- */
+
+void free_addr_tries(struct sr_addr_tries* curr_node) {
+    if(!curr_node) {
+        return;
+    }
+    free_addr_tries(curr_node->nodes[0]);
+    free_addr_tries(curr_node->nodes[1]);
+    free(curr_node);
+    return;
+}
 
 /*-----------------------------------------------------------------------------
  * Method: sr_init_instance(..)
@@ -249,6 +259,7 @@ static void sr_init_instance(struct sr_instance* sr)
     sr->if_list = 0;
     sr->routing_table = 0;
     sr->logfile = 0;
+    sr->tries_root = 0;
 } /* -- sr_init_instance -- */
 
 /*-----------------------------------------------------------------------------
