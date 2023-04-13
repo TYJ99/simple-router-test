@@ -1,2 +1,2 @@
-Name: Yen-Ju Tseng
-PID: A59005785
+# Building a Simple Router
+See Spec [here](./simple_router_spec.pdf)
